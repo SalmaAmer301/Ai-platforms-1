@@ -1,0 +1,80 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import seaborn as sns
+import matplotlib.pyplot as plt
+ 
+# Step 1: Implement the Initial Neural Network with Random Weights and Biases
+class SimpleNeuralNetwork(nn.Module):
+    def __init__(self):
+        super(SimpleNeuralNetwork, self).__init__()
+        # Define three hidden layers and one output layer
+        self.hidden1 = nn.Linear(1, 3)  # 1 input to 3 neurons
+        self.hidden2 = nn.Linear(3, 3)
+        self.hidden3 = nn.Linear(3, 3)
+        self.output = nn.Linear(3, 1)   # 3 neurons to 1 output
+ 
+        # Initialize weights and biases randomly using torch.rand()
+        nn.init.uniform_(self.hidden1.weight, a=-1.0, b=1.0)
+        nn.init.uniform_(self.hidden2.weight, a=-1.0, b=1.0)
+        nn.init.uniform_(self.hidden3.weight, a=-1.0, b=1.0)
+        nn.init.uniform_(self.output.weight, a=-1.0, b=1.0)
+ 
+    def forward(self, x):
+        # Pass through hidden layers with Sigmoid activation
+        x = torch.sigmoid(self.hidden1(x))
+        x = torch.sigmoid(self.hidden2(x))
+        x = torch.sigmoid(self.hidden3(x))
+        # Pass through output layer with Tanh activation
+        x = torch.tanh(self.output(x))
+        return x
+ 
+# Generate some sample input data
+x_data = torch.unsqueeze(torch.linspace(-1, 1, 100), dim=1)
+y_data = x_data**2  # Example target function (quadratic)
+ 
+# Initialize the neural network
+model = SimpleNeuralNetwork()
+ 
+# Step 1 Deliverable: Visualize Initial Predictions
+with torch.no_grad():
+    initial_predictions = model(x_data).detach().numpy()
+sns.lineplot(x=x_data.flatten().numpy(), y=initial_predictions.flatten(), label='Initial Predictions')
+plt.title('Initial Predictions before Training')
+plt.show()
+ 
+# Step 2: Build the Trainable Neural Network
+# Set all weights and biases as trainable (default in PyTorch)
+# Use SGD optimizer and MSE loss
+criterion = nn.MSELoss()
+optimizer = optim.SGD(model.parameters(), lr=0.1)
+ 
+# Step 3: Implement the Training Loop
+epochs = 100
+for epoch in range(epochs):
+    # Forward pass
+    predictions = model(x_data)
+    loss = criterion(predictions, y_data)
+    
+    # Backward pass and optimization
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    
+    # Print loss after each epoch
+    print(f'Epoch [{epoch+1}/{epochs}], Loss: {loss.item():.4f}')
+ 
+# Step 4: Visualization of Final Predictions
+# Plot final predictions after training
+with torch.no_grad():
+    final_predictions = model(x_data).detach().numpy()
+sns.lineplot(x=x_data.flatten().numpy(), y=final_predictions.flatten(), label='Final Predictions', color='red')
+plt.title('Final Predictions after Training')
+plt.show()
+ 
+# Compare Initial and Final Predictions
+plt.figure()
+sns.lineplot(x=x_data.flatten().numpy(), y=initial_predictions.flatten(), label='Before Training', color='blue')
+sns.lineplot(x=x_data.flatten().numpy(), y=final_predictions.flatten(), label='After Training', color='red')
+plt.title('Network Predictions Before and After Training')
+plt.show()
